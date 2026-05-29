@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Apex Ops Assistant</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f0f;
+      --surface: #181818;
+      --surface2: #222222;
+      --border: #2a2a2a;
+      --accent: #c9a96e;
+      --accent-dim: rgba(201,169,110,0.10);
+      --text: #f0ede8;
+      --text-dim: #888;
+      --bot-bg: #222222;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── WELCOME SCREEN ── */
+    #welcome {
+      position: fixed; inset: 0;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      animation: none;
+    }
+
+    #welcome.hiding {
+      animation: fadeOut 0.4s ease forwards;
+    }
+
+    @keyframes fadeOut {
+      to { opacity: 0; pointer-events: none; }
+    }
+
+    .welcome-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 48px 52px;
+      max-width: 480px;
+      width: 90%;
+      text-align: center;
+      animation: riseIn 0.5s ease;
+    }
+
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .welcome-logo {
+      width: 56px; height: 56px;
+      background: var(--accent);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'DM Mono', monospace;
+      font-size: 18px; font-weight: 500;
+      color: #0f0f0f;
+      margin: 0 auto 20px;
+    }
+
+    .welcome-card h1 {
+      font-size: 22px; font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .welcome-card .tagline {
+      font-size: 13px; color: var(--text-dim);
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .welcome-card .company-desc {
+      background: var(--accent-dim);
+      border: 1px solid rgba(201,169,110,0.15);
+      border-radius: 10px;
+      padding: 16px 18px;
+      font-size: 13px;
+      color: var(--text-dim);
+      line-height: 1.7;
+      margin-bottom: 28px;
+      text-align: left;
+    }
+
+    .welcome-card .company-desc strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .welcome-btn {
+      background: var(--accent);
+      color: #0f0f0f;
+      border: none;
+      border-radius: 10px;
+      padding: 13px 32px;
+      font-size: 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: opacity 0.15s;
+    }
+
+    .welcome-btn:hover { opacity: 0.85; }
+
+    /* ── LAYOUT ── */
+    #app { display: flex; flex-direction: column; height: 100vh; }
+
+    header {
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px;
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+
+    .logo {
+      width: 32px; height: 32px;
+      background: var(--accent);
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px; font-weight: 500;
+      color: #0f0f0f; flex-shrink: 0;
+    }
+
+    .header-text h1 { font-size: 14px; font-weight: 600; }
+    .header-text p  { font-size: 11px; color: var(--text-dim); margin-top: 1px; }
+
+    .status {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--text-dim);
+    }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #4caf7d; }
+
+    /* ── API BANNER ── */
+    #api-banner {
+      background: var(--accent-dim);
+      border-bottom: 1px solid rgba(201,169,110,0.18);
+      padding: 9px 24px;
+      display: flex; align-items: center; gap: 10px;
+      font-size: 12.5px; color: var(--accent);
+      flex-shrink: 0;
+    }
+    #api-banner input {
+      flex: 1; max-width: 320px;
+      background: var(--surface2);
+      border: 1px solid rgba(201,169,110,0.25);
+      border-radius: 6px; padding: 5px 10px;
+      font-size: 12.5px; font-family: 'DM Mono', monospace;
+      color: var(--text); outline: none;
+    }
+    #api-banner input:focus { border-color: var(--accent); }
+    #api-banner button {
+      background: var(--accent); color: #0f0f0f;
+      border: none; border-radius: 6px;
+      padding: 5px 12px; font-size: 12.5px;
+      font-family: 'DM Sans', sans-serif; font-weight: 600; cursor: pointer;
+    }
+
+    /* ── MAIN BODY ── */
+    #main { display: flex; flex: 1; overflow: hidden; position: relative; }
+
+    /* ── SIDEBAR ── */
+    #sidebar {
+      width: 260px; flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      background: var(--surface);
+      display: flex; flex-direction: column;
+      overflow-y: auto; overflow-x: hidden;
+      padding: 20px 16px;
+      gap: 24px;
+      position: relative;
+      transition: width 0.25s ease, padding 0.25s ease;
+    }
+
+    #sidebar.collapsed {
+      width: 28px;
+      padding: 8px 0;
+      overflow: hidden;
+    }
+
+    #sidebar.collapsed .sidebar-section { display: none; }
+
+    #sidebar-toggle {
+      position: absolute;
+      right: -13px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 26px; height: 26px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 10;
+      transition: background 0.15s, border-color 0.15s;
+      flex-shrink: 0;
+    }
+
+    #sidebar-toggle:hover { background: var(--accent-dim); border-color: var(--accent); }
+
+    #sidebar-toggle svg {
+      width: 16px; height: 16px;
+      fill: var(--text-dim);
+      transition: transform 0.25s ease;
+    }
+
+    #sidebar.collapsed #sidebar-toggle svg { transform: scaleX(-1); }
+
+    /* ── CHAT AREA ── */
+    #chat-area {
+      flex: 1; display: flex; flex-direction: column; overflow: hidden;
+    }
+
+    #messages {
+      flex: 1; overflow-y: auto;
+      padding: 24px 28px;
+      display: flex; flex-direction: column; gap: 18px;
+    }
+    #messages::-webkit-scrollbar { width: 4px; }
+    #messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .message { display: flex; gap: 10px; max-width: 680px; animation: fadeUp 0.2s ease; }
+    .message.user { align-self: flex-end; flex-direction: row-reverse; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .avatar {
+      width: 28px; height: 28px; border-radius: 6px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 600; margin-top: 2px;
+    }
+    .message.user .avatar { background: var(--accent); color: #0f0f0f; }
+    .message.bot  .avatar { background: var(--surface2); color: var(--accent); border: 1px solid var(--border); }
+
+    .bubble {
+      padding: 11px 15px; border-radius: 12px;
+      font-size: 13.5px; line-height: 1.65; max-width: 580px;
+    }
+    .message.user .bubble {
+      background: var(--accent); color: #0f0f0f;
+      border-bottom-right-radius: 3px; font-weight: 500;
+    }
+    .message.bot .bubble {
+      background: var(--bot-bg); color: var(--text);
+      border-bottom-left-radius: 3px; border: 1px solid var(--border);
+    }
+
+    .typing { display: flex; gap: 5px; align-items: center; padding: 13px 15px; }
+    .typing span {
+      width: 6px; height: 6px; background: var(--text-dim);
+      border-radius: 50%; animation: bounce 1.2s infinite;
+    }
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%,60%,100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-5px); opacity: 1; }
+    }
+
+    /* ── INPUT ── */
+    #input-area {
+      padding: 14px 28px 18px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      display: flex; gap: 10px; align-items: flex-end;
+      flex-shrink: 0;
+    }
+    #user-input {
+      flex: 1; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: 10px;
+      padding: 10px 14px; font-size: 13.5px;
+      font-family: 'DM Sans', sans-serif; color: var(--text);
+      outline: none; resize: none;
+      min-height: 42px; max-height: 110px; line-height: 1.5;
+      transition: border-color 0.15s;
+    }
+    #user-input:focus { border-color: var(--accent); }
+    #user-input::placeholder { color: var(--text-dim); }
+
+    #send-btn {
+      width: 42px; height: 42px;
+      background: var(--accent); border: none; border-radius: 10px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: opacity 0.15s;
+    }
+    #send-btn:hover { opacity: 0.85; }
+    #send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    #send-btn svg { width: 17px; height: 17px; fill: #0f0f0f; }
+
+    /* ── HELP BUTTON ── */
+    #help-btn {
+      margin-left: auto;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-size: 12.5px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
+      color: var(--text-dim);
+      cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    #help-btn:hover { border-color: var(--accent); color: var(--accent); }
+    #help-btn svg { width: 14px; height: 14px; fill: currentColor; }
+
+    /* ── HELP MODAL ── */
+    #help-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    #help-overlay.open { display: flex; }
+
+    #help-modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 460px;
+      width: 90%;
+      animation: riseIn 0.2s ease;
+    }
+
+    #help-modal h2 {
+      font-size: 16px; font-weight: 600;
+      color: var(--text); margin-bottom: 6px;
+    }
+
+    #help-modal .modal-sub {
+      font-size: 12.5px; color: var(--text-dim);
+      margin-bottom: 20px; line-height: 1.6;
+    }
+
+    #help-modal .modal-sub strong { color: var(--accent); font-weight: 600; }
+
+    .modal-section { margin-bottom: 20px; }
+
+    .modal-section h3 {
+      font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--text-dim); margin-bottom: 10px;
+    }
+
+    .topic-list { display: flex; flex-direction: column; gap: 6px; }
+    .topic-item {
+      display: flex; align-items: flex-start; gap: 8px;
+      font-size: 12.5px; color: var(--text-dim); line-height: 1.5;
+    }
+    .topic-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent); flex-shrink: 0; margin-top: 5px;
+    }
+
+    .example-list { display: flex; flex-direction: column; gap: 6px; }
+    .example-q {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 12px; color: var(--text-dim);
+      cursor: pointer; transition: all 0.15s; line-height: 1.4;
+    }
+    .example-q:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+    #help-close {
+      width: 100%; margin-top: 4px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px; padding: 9px;
+      font-size: 13px; font-family: 'DM Sans', sans-serif;
+      color: var(--text-dim); cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    #help-close:hover { border-color: var(--accent); color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<!-- WELCOME SCREEN -->
+<div id="welcome">
+  <div class="welcome-card">
+    <div class="welcome-logo">AX</div>
+    <h1>Welcome to Apex Ops Assistant</h1>
+    <p class="tagline">Your internal AI guide for company policies,<br/>workflows, and procedures.</p>
+    <div class="company-desc">
+      <strong>Apex Real Estate Partners</strong> is a commercial real estate advisory firm operating across retail, industrial, and capital markets. This assistant helps brokers and staff quickly find answers to operational questions — no more digging through binders or emailing the ops team for every policy question.
+    </div>
+    <button class="welcome-btn" onclick="dismissWelcome()">Get Started →</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <header>
+    <div class="logo">AX</div>
+    <div class="header-text">
+      <h1>Apex Ops Assistant</h1>
+      <p>Internal knowledge base · Powered by AI</p>
+    </div>
+    <div class="status" style="margin-right:auto"><div class="status-dot"></div>Online</div>
+    <button id="help-btn" onclick="openHelp()">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
+      Help
+    </button>
+  </header>
+
+
+
+  <div id="main">
+    <!-- CHAT -->
+    <div id="chat-area">
+      <div id="messages"></div>
+      <div id="input-area">
+        <textarea id="user-input" placeholder="Ask about policies, workflows, or procedures..." rows="1"></textarea>
+        <button id="send-btn" onclick="sendMessage()" disabled>
+          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SOPS = `
+SOP 1: Logging a New Deal in the CRM
+When a broker identifies a new deal, they must log it in the CRM within 24 hours. Required fields: property address, deal type (sale/lease), estimated value, client name, and assigned broker. Deals missing required fields will be flagged for review by the operations team. Once logged, the deal status should be set to "Active Prospect."
+
+SOP 2: New Broker Onboarding Checklist
+Week 1: Complete HR paperwork, receive CRM login credentials, attend systems orientation. Week 2: Shadow a senior broker on at least two client calls, complete compliance training module. Week 3: Submit first independent deal log in CRM. All onboarding must be completed within 30 days of start date.
+
+SOP 3: Handling a Client Inquiry
+All inbound client inquiries must be responded to within 2 business hours. Log the inquiry in the CRM under the client's profile. If the inquiry requires research, send an acknowledgment email within 2 hours and a full response within 24 hours. Escalate to a senior broker if the inquiry involves a deal over $1M.
+
+SOP 4: Property Listing Submission
+To submit a new property listing, complete the Listing Submission Form and attach all required documents: property photos, floor plan, and disclosure forms. Submit to the listings coordinator via the shared drive. Listings are reviewed within 3 business days. Incomplete submissions will be returned.
+
+SOP 5: Weekly Reporting
+Every Friday by 4pm, brokers must submit a weekly activity report covering: number of client calls, new deals logged, deals closed, and any escalations. Reports are submitted via the internal portal. Missing reports trigger an automatic reminder from the operations team after 1 hour.
+
+SOP 6: Deal Status Updates
+Brokers must update the status of all active deals in the CRM every Monday by 10am. Valid statuses are: Active Prospect, Under Negotiation, Pending Close, Closed, or Dead. Any deal that has not been updated in 14 days will be flagged and reviewed by the operations manager. Brokers must add a brief note explaining any status change.
+
+SOP 7: Client Meeting Documentation
+Following every client meeting, the broker must log a meeting summary in the CRM within 4 hours. The summary must include: date and time, attendees, topics discussed, action items, and next steps. Summaries are visible to the full brokerage team and should be written professionally.
+
+SOP 8: Commission Split Agreement
+Before a deal is finalized, the assigned broker must submit a Commission Split Agreement form to the operations team. The form requires: deal ID, total commission amount, split percentage between brokers (if applicable), and manager approval signature. Deals cannot be closed in the CRM without a completed and approved form on file.
+
+SOP 9: Conflict of Interest Disclosure
+If a broker has a personal or financial relationship with a client or counterparty in a deal, they must disclose it to their manager in writing before proceeding. The disclosure is logged in the broker's HR file and reviewed by compliance. Failure to disclose a conflict of interest is grounds for disciplinary action.
+
+SOP 10: Off-boarding a Departing Broker
+When a broker gives notice, the operations team must: transfer all active deals to another broker within 3 business days, revoke CRM access on the last day of employment, collect all company devices and key fobs, and archive the broker's client history in the shared drive. The departing broker's manager is responsible for ensuring all steps are completed within 5 business days of departure.
+`.trim();
+
+let apiKey = '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';
+let isLoading = false;
+
+const messagesEl = document.getElementById('messages');
+const inputEl    = document.getElementById('user-input');
+const sendBtn    = document.getElementById('send-btn');
+const keyInput   = document.getElementById('api-key-input');
+const keyStatus  = document.getElementById('key-status');
+
+sendBtn.disabled = false;
+
+
+function openHelp() {
+  document.getElementById('help-overlay').classList.add('open');
+}
+function closeHelp(e) {
+  if (!e || e.target === document.getElementById('help-overlay') || e.currentTarget.id === 'help-close') {
+    document.getElementById('help-overlay').classList.remove('open');
+  }
+}
+function askFromHelp(el) {
+  closeHelp();
+  document.getElementById('user-input').value = el.textContent;
+  sendMessage();
+}
+
+function dismissWelcome() {
+  const w = document.getElementById('welcome');
+  w.classList.add('hiding');
+  setTimeout(() => w.remove(), 400);
+  setTimeout(() => addMessage('bot', "Hi! I'm the Apex Ops Assistant. Ask me anything about company policies, workflows, or procedures — or pick an example from the sidebar to get started."), 500);
+}
+
+
+function addMessage(role, text) {
+  const msg    = document.createElement('div');
+  msg.className = `message ${role}`;
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar';
+  avatar.textContent = role === 'user' ? 'You' : 'AX';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.textContent = text;
+  msg.appendChild(avatar);
+  msg.appendChild(bubble);
+  messagesEl.appendChild(msg);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function addTyping() {
+  const msg = document.createElement('div');
+  msg.className = 'message bot';
+  msg.id = 'typing-indicator';
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar';
+  avatar.textContent = 'AX';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble typing';
+  bubble.innerHTML = '<span></span><span></span><span></span>';
+  msg.appendChild(avatar);
+  msg.appendChild(bubble);
+  messagesEl.appendChild(msg);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function removeTyping() {
+  const el = document.getElementById('typing-indicator');
+  if (el) el.remove();
+}
+
+async function sendMessage() {
+  const text = inputEl.value.trim();
+  if (!text || isLoading || !apiKey) return;
+
+  isLoading = true;
+  sendBtn.disabled = true;
+  inputEl.value = '';
+  inputEl.style.height = 'auto';
+
+  addMessage('user', text);
+  addTyping();
+
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        max_tokens: 1000,
+        messages: [
+          {
+            role: 'system',
+            content: `You are the Apex Real Estate Partners internal operations assistant. You help brokers and staff by answering questions about company policies, workflows, and procedures based strictly on the SOPs below.
+
+Rules:
+- Only answer based on the SOPs provided. Do not make up information.
+- If a question is not covered, say so and suggest contacting the operations team.
+- Be concise, clear, and professional.
+- Reference the specific SOP number when relevant.
+
+COMPANY SOPs:
+${SOPS}`
+          },
+          { role: 'user', content: text }
+        ]
+      })
+    });
+
+    const data = await res.json();
+    removeTyping();
+    if (data.choices && data.choices[0]) {
+      addMessage('bot', data.choices[0].message.content);
+    } else {
+      addMessage('bot', 'Something went wrong. Please check your API key and try again.');
+    }
+  } catch (err) {
+    removeTyping();
+    addMessage('bot', 'Error connecting to the API. Please check your key and internet connection.');
+  }
+
+  isLoading = false;
+  sendBtn.disabled = false;
+  inputEl.focus();
+}
+
+function askExample(el) {
+  inputEl.value = el.textContent;
+  sendMessage();
+}
+
+inputEl.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+inputEl.addEventListener('input', () => {
+  inputEl.style.height = 'auto';
+  inputEl.style.height = Math.min(inputEl.scrollHeight, 110) + 'px';
+});
+</script>
+
+<!-- HELP MODAL -->
+<div id="help-overlay" onclick="closeHelp(event)">
+  <div id="help-modal">
+    <h2>About Apex Ops Assistant</h2>
+    <p class="modal-sub">
+      <strong>Apex Real Estate Partners</strong> is a commercial real estate advisory firm. This assistant is trained on internal SOPs to help brokers and staff find answers fast — no tickets, no waiting.
+    </p>
+
+    <div class="modal-section">
+      <h3>What I can help with</h3>
+      <div class="topic-list">
+        <div class="topic-item"><div class="topic-dot"></div><span>Logging and updating deals in the CRM</span></div>
+        <div class="topic-item"><div class="topic-dot"></div><span>New broker onboarding steps</span></div>
+        <div class="topic-item"><div class="topic-dot"></div><span>Client inquiry handling procedures</span></div>
+        <div class="topic-item"><div class="topic-dot"></div><span>Property listing submissions</span></div>
+        <div class="topic-item"><div class="topic-dot"></div><span>Weekly reporting deadlines</span></div>
+        <div class="topic-item"><div class="topic-dot"></div><span>Commission split agreements</span></div>
+        <div class="topic-item"><div class="topic-dot"></div><span>Conflict of interest disclosures</span></div>
+        <div class="topic-item"><div class="topic-dot"></div><span>Off-boarding procedures</span></div>
+      </div>
+    </div>
+
+    <div class="modal-section">
+      <h3>Example questions</h3>
+      <div class="example-list">
+        <div class="example-q" onclick="askFromHelp(this)">How do I log a new deal in the CRM?</div>
+        <div class="example-q" onclick="askFromHelp(this)">What do I need to complete in my first 30 days?</div>
+        <div class="example-q" onclick="askFromHelp(this)">When are weekly reports due?</div>
+        <div class="example-q" onclick="askFromHelp(this)">What happens if I have a conflict of interest?</div>
+        <div class="example-q" onclick="askFromHelp(this)">How long do I have to respond to a client inquiry?</div>
+      </div>
+    </div>
+
+    <button id="help-close" onclick="closeHelp()">Close</button>
+  </div>
+</div>
+</body>
+</html>
