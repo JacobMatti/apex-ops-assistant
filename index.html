@@ -401,6 +401,44 @@
       transition: border-color 0.15s, color 0.15s;
     }
     #help-close:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* API BANNER */
+    #api-banner {
+      background: rgba(201,169,110,0.10);
+      border-bottom: 1px solid rgba(201,169,110,0.18);
+      padding: 9px 24px;
+      display: flex; align-items: center; gap: 10px;
+      font-size: 12.5px; color: var(--accent);
+      flex-shrink: 0;
+    }
+    #api-banner input {
+      flex: 1; max-width: 320px;
+      background: var(--surface2);
+      border: 1px solid rgba(201,169,110,0.25);
+      border-radius: 6px; padding: 5px 10px;
+      font-size: 12.5px; font-family: 'DM Mono', monospace;
+      color: var(--text); outline: none;
+    }
+    #api-banner input:focus { border-color: var(--accent); }
+    #api-banner button.save-btn {
+      background: var(--accent); color: #0f0f0f;
+      border: none; border-radius: 6px;
+      padding: 5px 12px; font-size: 12.5px;
+      font-family: 'DM Sans', sans-serif; font-weight: 600; cursor: pointer;
+    }
+    #how-to {
+      display: none; background: #111;
+      border-bottom: 1px solid var(--border);
+      padding: 16px 28px; font-size: 13px;
+      color: var(--text-dim); line-height: 1.9;
+    }
+    #how-to-btn {
+      margin-left: auto; background: none;
+      border: 1px solid rgba(201,169,110,0.3);
+      border-radius: 6px; padding: 4px 10px;
+      font-size: 12px; color: var(--accent);
+      cursor: pointer; font-family: 'DM Sans', sans-serif;
+    }
   </style>
 </head>
 <body>
@@ -433,7 +471,27 @@
     </button>
   </header>
 
+  <div id="api-banner" style="display:none;">
+    <span>Groq API Key:</span>
+    <input type="password" id="api-key-input" placeholder="gsk_..." />
+    <button class="save-btn" onclick="saveKey()">Save</button>
+    <span id="key-status" style="margin-left:6px;"></span>
+    <button id="how-to-btn" onclick="toggleHowTo()">How to get a free key?</button>
+  </div>
 
+  <!-- HOW TO MODAL -->
+  <div id="howto-overlay" onclick="closeHowTo(event)" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;align-items:center;justify-content:center;">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px 32px;max-width:420px;width:90%;position:relative;">
+      <h3 style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:16px;">Get a free Groq API key</h3>
+      <p style="font-size:13px;color:var(--text-dim);line-height:1.9;">
+        1. Go to <a href="https://console.groq.com" target="_blank" style="color:var(--accent);">console.groq.com</a> and create a free account — no credit card needed.<br/>
+        2. Click <strong style="color:var(--text);">API Keys</strong> in the left sidebar → <strong style="color:var(--text);">Create API Key</strong>.<br/>
+        3. Give it any name and copy the key (starts with <code style="background:var(--surface2);padding:1px 6px;border-radius:4px;font-family:'DM Mono',monospace;font-size:12px;">gsk_</code>).<br/>
+        4. Paste it in the field at the top and click <strong style="color:var(--text);">Save</strong>.
+      </p>
+      <button onclick="closeHowTo()" style="margin-top:20px;width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text-dim);cursor:pointer;">Close</button>
+    </div>
+  </div>
 
   <div id="main">
     <!-- CHAT -->
@@ -450,6 +508,10 @@
 </div>
 
 <script>
+function toggleHowTo() {
+  alert("Get a free Groq API key in 2 minutes:\n\n1. Go to console.groq.com and create a free account — no credit card needed.\n2. Click 'API Keys' in the left sidebar → 'Create API Key'.\n3. Give it any name and copy the key (starts with gsk_).\n4. Paste it in the field and click Save. You're good to go!");
+}
+
 const SOPS = `
 SOP 1: Logging a New Deal in the CRM
 When a broker identifies a new deal, they must log it in the CRM within 24 hours. Required fields: property address, deal type (sale/lease), estimated value, client name, and assigned broker. Deals missing required fields will be flagged for review by the operations team. Once logged, the deal status should be set to "Active Prospect."
@@ -482,10 +544,18 @@ SOP 10: Off-boarding a Departing Broker
 When a broker gives notice, the operations team must: transfer all active deals to another broker within 3 business days, revoke CRM access on the last day of employment, collect all company devices and key fobs, and archive the broker's client history in the shared drive. The departing broker's manager is responsible for ensuring all steps are completed within 5 business days of departure.
 `.trim();
 
-let apiKey = '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';
+let apiKey = localStorage.getItem('apex_groq_key') || '';
 let isLoading = false;
 
 const messagesEl = document.getElementById('messages');
+const sendBtnEl = document.getElementById('send-btn');
+if (apiKey) {
+  document.getElementById('api-key-input').value = apiKey;
+  document.getElementById('key-status').textContent = '✓ Saved';
+  document.getElementById('key-status').style.color = '#4caf7d';
+} else {
+  sendBtnEl.disabled = true;
+}
 const inputEl    = document.getElementById('user-input');
 const sendBtn    = document.getElementById('send-btn');
 const keyInput   = document.getElementById('api-key-input');
@@ -512,6 +582,7 @@ function dismissWelcome() {
   const w = document.getElementById('welcome');
   w.classList.add('hiding');
   setTimeout(() => w.remove(), 400);
+  document.getElementById('api-banner').style.display = 'flex';
   setTimeout(() => addMessage('bot', "Hi! I'm the Apex Ops Assistant. Ask me anything about company policies, workflows, or procedures — or pick an example from the sidebar to get started."), 500);
 }
 
